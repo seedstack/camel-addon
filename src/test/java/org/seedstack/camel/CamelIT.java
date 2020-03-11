@@ -10,17 +10,33 @@ package org.seedstack.camel;
 
 import javax.inject.Inject;
 import org.apache.camel.ProducerTemplate;
+import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.seedstack.seed.testing.ConfigurationProperty;
 import org.seedstack.seed.testing.junit4.SeedITRunner;
 
 @RunWith(SeedITRunner.class)
+@ConfigurationProperty(name="config.test.value",value="Test value")
 public class CamelIT {
     @Inject
     private ProducerTemplate producerTemplate;
 
+    /**
+     * The route builder(s) should have been detected during initialization and attached to the Camel context.<br>
+     * The producer template should have been injected successfully and created from the Camel context.
+     */
     @Test
     public void basicCamelRoute() {
+        Assertions.assertThat(producerTemplate).as("Check producer template is injected").isNotNull();
         producerTemplate.sendBody("direct:a", "World");
+    }
+
+    /**
+     * Tests that the injector is Injected in the route builder<br>
+     */
+    @Test
+    public void usingProcessor(){
+        producerTemplate.sendBody("direct:b", "Test processor");
     }
 }

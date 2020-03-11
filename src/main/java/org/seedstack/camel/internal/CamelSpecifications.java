@@ -11,6 +11,8 @@ import static org.seedstack.shed.reflect.ClassPredicates.classImplements;
 import static org.seedstack.shed.reflect.ClassPredicates.classModifierIs;
 
 import java.lang.reflect.Modifier;
+
+import org.apache.camel.Processor;
 import org.apache.camel.RoutesBuilder;
 import org.kametic.specifications.Specification;
 import org.seedstack.seed.core.internal.utils.SpecificationBuilder;
@@ -22,4 +24,10 @@ public final class CamelSpecifications {
      */
     public static final Specification<Class<?>> ROUTES_BUILDER = new SpecificationBuilder<>(
             classImplements(RoutesBuilder.class).and(classModifierIs(Modifier.ABSTRACT).negate())).build();
+
+    /**
+     * The processor specification. It accepts all non abstract classes implementing {@link org.apache.camel.Processor}
+     */
+    public static final Specification<Class<?>> PROCESSOR =new SpecificationBuilder<>(
+            classImplements(Processor.class).and((classModifierIs(Modifier.ABSTRACT).negate()))).build();
 }

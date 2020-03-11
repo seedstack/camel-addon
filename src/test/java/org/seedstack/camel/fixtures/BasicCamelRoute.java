@@ -15,12 +15,7 @@ import org.apache.camel.builder.RouteBuilder;
 public class BasicCamelRoute extends RouteBuilder {
     @Override
     public void configure() throws Exception {
-        Processor myProcessor = new Processor() {
-            public void process(Exchange exchange) {
-                log.info("Hello " + exchange.getIn().getBody() + "!");
-            }
-        };
         errorHandler(deadLetterChannel("mock:error"));
-        from("direct:a").process(myProcessor);
+        from("direct:a").to("mock:NoEnd");
     }
 }

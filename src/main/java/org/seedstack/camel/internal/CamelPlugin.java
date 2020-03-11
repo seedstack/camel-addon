@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.inject.Inject;
 import org.apache.camel.CamelContext;
+import org.apache.camel.Processor;
 import org.apache.camel.RoutesBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.seedstack.seed.SeedException;
@@ -28,6 +29,7 @@ import org.slf4j.LoggerFactory;
 public class CamelPlugin extends AbstractSeedPlugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(CamelPlugin.class);
     private final Set<Class<? extends RoutesBuilder>> routesBuilderClasses = new HashSet<>();
+    private final Set<Class<? extends Processor>> processorClasses= new HashSet<>();
     private CamelContext camelContext;
     @Inject
     private Set<RoutesBuilder> routesBuilder;
@@ -41,6 +43,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
     public Collection<ClasspathScanRequest> classpathScanRequests() {
         return classpathScanRequestBuilder()
                 .specification(CamelSpecifications.ROUTES_BUILDER)
+                .specification(CamelSpecifications.PROCESSOR)
                 .build();
     }
 
@@ -53,9 +56,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
                 .filter(RoutesBuilder.class::isAssignableFrom)
                 .forEach(candidate -> {
                     Class<? extends RoutesBuilder> routesBuilderClass = candidate.asSubclass(RoutesBuilder.class);
-                    if (!Modifier.isAbstract(routesBuilderClass.getModifiers())) {
-                        routesBuilderClasses.add(routesBuilderClass);
-                    }
+                    routesBuilderClasses.add(routesBuilderClass);
                 });
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Detected {} Camel route builder(s): {}", routesBuilderClasses.size(), routesBuilderClasses);
@@ -63,12 +64,25 @@ public class CamelPlugin extends AbstractSeedPlugin {
             LOGGER.info("Detected {} Camel route builder(s), enable DEBUG logging to see details",
                     routesBuilderClasses.size());
         }
+
+        initContext.scannedTypesBySpecification()
+                .get(CamelSpecifications.PROCESSOR)
+                .stream().filter(Processor.class::isAssignableFrom)
+                .forEach(candidate ->{
+                    Class<? extends Processor> processorClass=candidate.asSubclass(Processor.class);
+                    processorClasses.add(processorClass);
+                });
+        if(LOGGER.isDebugEnabled()){
+            LOGGER.debug("Detected {} Camel processor(s): {}", processorClasses.size(), processorClasses);
+        }else{
+            LOGGER.info("Detected {} Camel processor(s), enable DEBUG logging to see details", processorClasses.size());
+        }
         return InitState.INITIALIZED;
     }
 
     @Override
     public Object nativeUnitModule() {
-        return new CamelModule(camelContext, routesBuilderClasses);
+        return new CamelModule(camelContext, routesBuilderClasses, processorClasses);
     }
 
     @Override
