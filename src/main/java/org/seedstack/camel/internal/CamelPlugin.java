@@ -5,6 +5,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  */
+
 package org.seedstack.camel.internal;
 
 import io.nuun.kernel.api.plugin.InitState;
@@ -67,15 +68,15 @@ public class CamelPlugin extends AbstractSeedPlugin {
 
     @Override
     public Object nativeUnitModule() {
-        return new CamelModule(routesBuilderClasses);
+        return new CamelModule(camelContext, routesBuilderClasses);
     }
 
     @Override
     public void start(Context context) {
         LOGGER.info("Adding route(s) to Camel context");
-        routesBuilder.forEach(r -> {
+        routesBuilder.forEach(routesBuilder -> {
             try {
-                r.addRoutesToCamelContext(camelContext);
+                routesBuilder.addRoutesToCamelContext(camelContext);
             } catch (Exception e) {
                 throw SeedException.wrap(e, CamelErrorCode.ERROR_BUILDING_CAMEL_CONTEXT);
             }
