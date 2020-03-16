@@ -12,15 +12,17 @@ import io.nuun.kernel.api.plugin.InitState;
 import io.nuun.kernel.api.plugin.context.Context;
 import io.nuun.kernel.api.plugin.context.InitContext;
 import io.nuun.kernel.api.plugin.request.ClasspathScanRequest;
-import java.lang.reflect.Modifier;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javax.inject.Inject;
-import org.apache.camel.CamelContext;
-import org.apache.camel.Processor;
-import org.apache.camel.RoutesBuilder;
+
+import org.apache.camel.*;
+import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
+import org.kametic.specifications.Specification;
 import org.seedstack.seed.SeedException;
 import org.seedstack.seed.core.internal.AbstractSeedPlugin;
 import org.slf4j.Logger;
@@ -28,8 +30,16 @@ import org.slf4j.LoggerFactory;
 
 public class CamelPlugin extends AbstractSeedPlugin {
     private static final Logger LOGGER = LoggerFactory.getLogger(CamelPlugin.class);
+    private static final String ROUTE_BUILDER_LOGS_DESCRIPTION="route builder(s)";
+    private static final String PROCESSOR_LOGS_DESCRIPTION="processor(s)";
+    private static final String COMPONENT_LOGS_DESCRIPTION="component(s)";
+    private static final String ENDPOINT_LOGS_DESCRIPTION="endpoint(s)";
+
     private final Set<Class<? extends RoutesBuilder>> routesBuilderClasses = new HashSet<>();
     private final Set<Class<? extends Processor>> processorClasses= new HashSet<>();
+    private final Set<Class<? extends Component>> componentClasses= new HashSet<>();
+    private final Set<Class<? extends Endpoint>> endpointClasses= new HashSet<>();
+
     private CamelContext camelContext;
     @Inject
     private Set<RoutesBuilder> routesBuilder;
@@ -44,45 +54,49 @@ public class CamelPlugin extends AbstractSeedPlugin {
         return classpathScanRequestBuilder()
                 .specification(CamelSpecifications.ROUTES_BUILDER)
                 .specification(CamelSpecifications.PROCESSOR)
+                .specification(CamelSpecifications.COMPONENT)
+                .specification(CamelSpecifications.ENDPOINT)
                 .build();
     }
 
     @Override
     protected InitState initialize(InitContext initContext) {
         camelContext = new DefaultCamelContext();
-        initContext.scannedTypesBySpecification()
-                .get(CamelSpecifications.ROUTES_BUILDER)
-                .stream()
-                .filter(RoutesBuilder.class::isAssignableFrom)
-                .forEach(candidate -> {
-                    Class<? extends RoutesBuilder> routesBuilderClass = candidate.asSubclass(RoutesBuilder.class);
-                    routesBuilderClasses.add(routesBuilderClass);
-                });
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("Detected {} Camel route builder(s): {}", routesBuilderClasses.size(), routesBuilderClasses);
-        } else {
-            LOGGER.info("Detected {} Camel route builder(s), enable DEBUG logging to see details",
-                    routesBuilderClasses.size());
-        }
+        initializeClassesSet(initContext, RouteBuilder.class, CamelSpecifications.ROUTES_BUILDER, routesBuilderClasses, ROUTE_BUILDER_LOGS_DESCRIPTION);
+        initializeClassesSet(initContext, Processor.class, CamelSpecifications.PROCESSOR, processorClasses, PROCESSOR_LOGS_DESCRIPTION);
+        initializeClassesSet(initContext, Component.class, CamelSpecifications.COMPONENT, componentClasses, COMPONENT_LOGS_DESCRIPTION);
+        initializeClassesSet(initContext, Endpoint.class, CamelSpecifications.ENDPOINT, endpointClasses, ENDPOINT_LOGS_DESCRIPTION);
 
-        initContext.scannedTypesBySpecification()
-                .get(CamelSpecifications.PROCESSOR)
-                .stream().filter(Processor.class::isAssignableFrom)
-                .forEach(candidate ->{
-                    Class<? extends Processor> processorClass=candidate.asSubclass(Processor.class);
-                    processorClasses.add(processorClass);
-                });
-        if(LOGGER.isDebugEnabled()){
-            LOGGER.debug("Detected {} Camel processor(s): {}", processorClasses.size(), processorClasses);
-        }else{
-            LOGGER.info("Detected {} Camel processor(s), enable DEBUG logging to see details", processorClasses.size());
-        }
         return InitState.INITIALIZED;
+    }
+
+    private <T>void initializeClassesSet(InitContext initContext, Class<? extends T> managedClass, Specification specification, Set<Class<? extends T>> classSet, String classesLogDescription){
+        initContext.scannedTypesBySpecification()
+                .get(specification)
+                .forEach(candidate ->{
+                    Class<? extends T> candidateClass = candidate.asSubclass(managedClass);
+                    classSet.add(candidateClass);
+                });
+        /*
+        initContext.scannedTypesBySpecification()
+                .getOrDefault(specification,new ArrayList<>())
+                .stream()
+                .filter(managedClass::isAssignableFrom)
+                .forEach(candidate ->{
+                    Class<? extends T> candidateClass = candidate.asSubclass(managedClass);
+                    classSet.add(candidateClass);
+                });*/
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("Detected {} Camel {}: {}", classSet.size(), classesLogDescription, classSet);
+        } else {
+            LOGGER.info("Detected {} Camel {}, enable DEBUG logging to see details",
+                    classSet.size(), classesLogDescription);
+        }
     }
 
     @Override
     public Object nativeUnitModule() {
-        return new CamelModule(camelContext, routesBuilderClasses, processorClasses);
+        return new CamelModule(camelContext, routesBuilderClasses, processorClasses,componentClasses, endpointClasses);
     }
 
     @Override
