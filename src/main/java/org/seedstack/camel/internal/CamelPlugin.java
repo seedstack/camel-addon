@@ -77,15 +77,6 @@ public class CamelPlugin extends AbstractSeedPlugin {
                     Class<? extends T> candidateClass = candidate.asSubclass(managedClass);
                     classSet.add(candidateClass);
                 });
-        /*
-        initContext.scannedTypesBySpecification()
-                .getOrDefault(specification,new ArrayList<>())
-                .stream()
-                .filter(managedClass::isAssignableFrom)
-                .forEach(candidate ->{
-                    Class<? extends T> candidateClass = candidate.asSubclass(managedClass);
-                    classSet.add(candidateClass);
-                });*/
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("Detected {} Camel {}: {}", classSet.size(), classesLogDescription, classSet);
         } else {
