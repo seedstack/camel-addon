@@ -35,9 +35,17 @@ class CamelModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ProducerTemplate.class).toProvider(new ProducerTemplateProvider(camelContext));
+        //Set binding for routes
         Multibinder<RoutesBuilder> routesBuilderBinder = Multibinder.newSetBinder(binder(), RoutesBuilder.class);
         routesBuilderClasses.forEach(cl -> routesBuilderBinder.addBinding().to(cl));
+        //Set binding for components
+        Multibinder<Component> componentSetBinder=Multibinder.newSetBinder(binder(),Component.class);
+        componentClasses.forEach(componentClass-> componentSetBinder.addBinding().to(componentClass));
+        //Set binding for Endpoints
+        Multibinder<Endpoint> endpointSetBinder=Multibinder.newSetBinder(binder(), Endpoint.class);
+        endPointClasses.forEach(endpointClass-> endpointSetBinder.addBinding().to(endpointClass));
 
+        //Unitary bindings
         processorClasses.forEach(this::bind);
         componentClasses.forEach(this::bind);
         endPointClasses.forEach(this::bind);

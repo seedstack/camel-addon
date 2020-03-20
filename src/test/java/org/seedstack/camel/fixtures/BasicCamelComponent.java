@@ -9,9 +9,10 @@ package org.seedstack.camel.fixtures;
 
 import org.apache.camel.Endpoint;
 import org.apache.camel.support.DefaultComponent;
+import org.seedstack.camel.CamelComponent;
 
 import java.util.Map;
-
+@CamelComponent(componentName = "basicComponent")
 public class BasicCamelComponent extends DefaultComponent {
 
     @Override

@@ -23,6 +23,8 @@ import org.apache.camel.*;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.kametic.specifications.Specification;
+import org.seedstack.camel.CamelComponent;
+import org.seedstack.camel.CamelEndpoint;
 import org.seedstack.seed.SeedException;
 import org.seedstack.seed.core.internal.AbstractSeedPlugin;
 import org.slf4j.Logger;
@@ -43,6 +45,10 @@ public class CamelPlugin extends AbstractSeedPlugin {
     private CamelContext camelContext;
     @Inject
     private Set<RoutesBuilder> routesBuilder;
+    @Inject
+    private Set<Component> customCamelComponents;
+    @Inject
+    private Set<Endpoint> customCamelEndpoints;
 
     @Override
     public String name() {
@@ -100,6 +106,28 @@ public class CamelPlugin extends AbstractSeedPlugin {
                 throw SeedException.wrap(e, CamelErrorCode.ERROR_BUILDING_CAMEL_CONTEXT);
             }
         });
+        LOGGER.info("Adding component(s) to Camel context");
+        customCamelComponents.forEach(componentClass->{
+            //Get the annotated component name
+            CamelComponent camelAnnotation =componentClass.getClass().getAnnotation(CamelComponent.class);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Adding custom component to the Camel context : {}", camelAnnotation.componentName());
+            }
+            camelContext.addComponent(camelAnnotation.componentName(),componentClass);
+        });
+        LOGGER.info("Adding endpoint(s) to Camel context");
+        customCamelEndpoints.forEach(endpointClass->{
+            CamelEndpoint classAnnotation = endpointClass.getClass().getAnnotation(CamelEndpoint.class);
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Adding custom endpoint uri to camel context : {}", classAnnotation.endPointUri());
+            }
+            try {
+                camelContext.addEndpoint(classAnnotation.endPointUri(), endpointClass);
+            } catch(Exception e){
+                throw SeedException.wrap(e, CamelErrorCode.ERROR_BUILDING_CAMEL_CONTEXT);
+            }
+        });
+
         LOGGER.info("Starting Camel context");
         camelContext.start();
     }

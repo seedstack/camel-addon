@@ -9,9 +9,8 @@ package org.seedstack.camel.internal;
 
 
 import static org.seedstack.shed.reflect.ClassPredicates.classImplements;
-import static org.seedstack.shed.reflect.ClassPredicates.classIsDescendantOf;
+import static org.seedstack.shed.reflect.AnnotationPredicates.classOrAncestorAnnotatedWith;
 import static org.seedstack.shed.reflect.ClassPredicates.classModifierIs;
-import static org.seedstack.shed.reflect.ClassPredicates.classIs;
 
 import java.lang.reflect.Modifier;
 
@@ -20,8 +19,9 @@ import org.apache.camel.Endpoint;
 import org.apache.camel.Processor;
 import org.apache.camel.RoutesBuilder;
 import org.kametic.specifications.Specification;
+import org.seedstack.camel.CamelComponent;
+import org.seedstack.camel.CamelEndpoint;
 import org.seedstack.seed.core.internal.utils.SpecificationBuilder;
-import org.seedstack.shed.reflect.ClassPredicates;
 
 public final class CamelSpecifications {
     /**
@@ -42,11 +42,13 @@ public final class CamelSpecifications {
      * The Component specification. It accepts all non abstract classes implementing {@link org.apache.camel.Component}
      */
     public static final Specification<Class<?>> COMPONENT = new SpecificationBuilder<>(
-            classImplements(Component.class).and((classModifierIs(Modifier.ABSTRACT).negate()))).build();
+            classImplements(Component.class).and((classModifierIs(Modifier.ABSTRACT).negate())
+            .and(classOrAncestorAnnotatedWith(CamelComponent.class, false)))).build();
 
     /**
      * The Endpoint specification. It accepts all non abstract classes implementing {@link org.apache.camel.Endpoint}
      */
     public static final Specification<Class<?>> ENDPOINT = new SpecificationBuilder<>(
-            classImplements(Endpoint.class).and((classModifierIs(Modifier.ABSTRACT).negate()))).build();
+            classImplements(Endpoint.class).and((classModifierIs(Modifier.ABSTRACT).negate())
+            .and(classOrAncestorAnnotatedWith(CamelEndpoint.class, false)))).build();
 }
