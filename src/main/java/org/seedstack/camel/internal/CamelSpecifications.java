@@ -14,10 +14,7 @@ import static org.seedstack.shed.reflect.ClassPredicates.classModifierIs;
 
 import java.lang.reflect.Modifier;
 
-import org.apache.camel.Component;
-import org.apache.camel.Endpoint;
-import org.apache.camel.Processor;
-import org.apache.camel.RoutesBuilder;
+import org.apache.camel.*;
 import org.kametic.specifications.Specification;
 import org.seedstack.camel.CamelComponent;
 import org.seedstack.camel.CamelEndpoint;
@@ -40,6 +37,7 @@ public final class CamelSpecifications {
 
     /**
      * The Component specification. It accepts all non abstract classes implementing {@link org.apache.camel.Component}
+     * and annotated with {@link org.seedstack.camel.CamelComponent}
      */
     public static final Specification<Class<?>> COMPONENT = new SpecificationBuilder<>(
             classImplements(Component.class).and((classModifierIs(Modifier.ABSTRACT).negate())
@@ -47,8 +45,20 @@ public final class CamelSpecifications {
 
     /**
      * The Endpoint specification. It accepts all non abstract classes implementing {@link org.apache.camel.Endpoint}
+     * and annotated with {@link org.seedstack.camel.CamelEndpoint}
      */
     public static final Specification<Class<?>> ENDPOINT = new SpecificationBuilder<>(
             classImplements(Endpoint.class).and((classModifierIs(Modifier.ABSTRACT).negate())
             .and(classOrAncestorAnnotatedWith(CamelEndpoint.class, false)))).build();
+
+    /**
+     * The producer specification. It accepts all non abstract classes implementing {@link org.apache.camel.Producer}
+     */
+    public static final Specification<Class<?>> PRODUCER = new SpecificationBuilder<>(
+            classImplements(Producer.class).and((classModifierIs(Modifier.ABSTRACT).negate()))).build();
+    /**
+     * The consumer specification. It accepts all non abstract classes implementing {@link org.apache.camel.Consumer}
+     */
+    public static final Specification<Class<?>> CONSUMER = new SpecificationBuilder<>(
+            classImplements(Consumer.class).and((classModifierIs(Modifier.ABSTRACT).negate()))).build();
 }

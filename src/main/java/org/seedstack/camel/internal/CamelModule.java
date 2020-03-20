@@ -21,15 +21,19 @@ class CamelModule extends AbstractModule {
     private final Set<Class<? extends Processor>> processorClasses;
     private final Set<Class<? extends Component>> componentClasses;
     private final Set<Class<? extends Endpoint>> endPointClasses;
+    private final Set<Class<? extends Producer>> producerClasses;
+    private final Set<Class<? extends Consumer>> consumerClasses;
 
 
 
-    CamelModule(CamelContext camelContext, Set<Class<? extends RoutesBuilder>> routesBuilderClasses, Set<Class<? extends Processor>> processorClasses, Set<Class<? extends Component>> componentClasses,Set<Class<? extends Endpoint>> endPointClasses) {
+    CamelModule(CamelContext camelContext, Set<Class<? extends RoutesBuilder>> routesBuilderClasses, Set<Class<? extends Processor>> processorClasses, Set<Class<? extends Component>> componentClasses,Set<Class<? extends Endpoint>> endPointClasses, Set<Class<? extends Producer>> producerClasses, Set<Class<? extends Consumer>> consumerClasses) {
         this.camelContext = camelContext;
         this.routesBuilderClasses = routesBuilderClasses;
         this.processorClasses=processorClasses;
         this.componentClasses=componentClasses;
         this.endPointClasses=endPointClasses;
+        this.producerClasses=producerClasses;
+        this.consumerClasses=consumerClasses;
     }
 
     @Override
@@ -49,5 +53,7 @@ class CamelModule extends AbstractModule {
         processorClasses.forEach(this::bind);
         componentClasses.forEach(this::bind);
         endPointClasses.forEach(this::bind);
+        producerClasses.forEach(this::bind);
+        consumerClasses.forEach(this::bind);
     }
 }

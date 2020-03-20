@@ -36,11 +36,15 @@ public class CamelPlugin extends AbstractSeedPlugin {
     private static final String PROCESSOR_LOGS_DESCRIPTION="processor(s)";
     private static final String COMPONENT_LOGS_DESCRIPTION="component(s)";
     private static final String ENDPOINT_LOGS_DESCRIPTION="endpoint(s)";
+    private static final String PRODUCER_LOGS_DESCRIPTION="producer(s)";
+    private static final String CONSUMER_LOGS_DESCRIPTION="consumer(s)";
 
     private final Set<Class<? extends RoutesBuilder>> routesBuilderClasses = new HashSet<>();
     private final Set<Class<? extends Processor>> processorClasses= new HashSet<>();
     private final Set<Class<? extends Component>> componentClasses= new HashSet<>();
     private final Set<Class<? extends Endpoint>> endpointClasses= new HashSet<>();
+    private final Set<Class<? extends Producer>> producerClasses= new HashSet<>();
+    private final Set<Class<? extends Consumer>> consumerClasses= new HashSet<>();
 
     private CamelContext camelContext;
     @Inject
@@ -72,13 +76,15 @@ public class CamelPlugin extends AbstractSeedPlugin {
         initializeClassesSet(initContext, Processor.class, CamelSpecifications.PROCESSOR, processorClasses, PROCESSOR_LOGS_DESCRIPTION);
         initializeClassesSet(initContext, Component.class, CamelSpecifications.COMPONENT, componentClasses, COMPONENT_LOGS_DESCRIPTION);
         initializeClassesSet(initContext, Endpoint.class, CamelSpecifications.ENDPOINT, endpointClasses, ENDPOINT_LOGS_DESCRIPTION);
+        initializeClassesSet(initContext, Producer.class, CamelSpecifications.PRODUCER, producerClasses, PRODUCER_LOGS_DESCRIPTION);
+        initializeClassesSet(initContext, Consumer.class, CamelSpecifications.CONSUMER, consumerClasses, CONSUMER_LOGS_DESCRIPTION);
 
         return InitState.INITIALIZED;
     }
 
     private <T>void initializeClassesSet(InitContext initContext, Class<? extends T> managedClass, Specification specification, Set<Class<? extends T>> classSet, String classesLogDescription){
         initContext.scannedTypesBySpecification()
-                .get(specification)
+                .getOrDefault(specification, new ArrayList<>())
                 .forEach(candidate ->{
                     Class<? extends T> candidateClass = candidate.asSubclass(managedClass);
                     classSet.add(candidateClass);
@@ -93,7 +99,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
 
     @Override
     public Object nativeUnitModule() {
-        return new CamelModule(camelContext, routesBuilderClasses, processorClasses,componentClasses, endpointClasses);
+        return new CamelModule(camelContext, routesBuilderClasses, processorClasses,componentClasses, endpointClasses, producerClasses,consumerClasses);
     }
 
     @Override
