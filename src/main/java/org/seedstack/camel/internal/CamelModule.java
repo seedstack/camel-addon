@@ -11,6 +11,7 @@ package org.seedstack.camel.internal;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.camel.*;
@@ -23,10 +24,10 @@ class CamelModule extends AbstractModule {
     private final Set<Class<? extends Endpoint>> endPointClasses;
     private final Set<Class<? extends Producer>> producerClasses;
     private final Set<Class<? extends Consumer>> consumerClasses;
+    private final Set<Class<? extends Predicate>> predicateClasses;
 
 
-
-    CamelModule(CamelContext camelContext, Set<Class<? extends RoutesBuilder>> routesBuilderClasses, Set<Class<? extends Processor>> processorClasses, Set<Class<? extends Component>> componentClasses,Set<Class<? extends Endpoint>> endPointClasses, Set<Class<? extends Producer>> producerClasses, Set<Class<? extends Consumer>> consumerClasses) {
+    CamelModule(CamelContext camelContext, Set<Class<? extends RoutesBuilder>> routesBuilderClasses, Set<Class<? extends Processor>> processorClasses, Set<Class<? extends Component>> componentClasses,Set<Class<? extends Endpoint>> endPointClasses, Set<Class<? extends Producer>> producerClasses, Set<Class<? extends Consumer>> consumerClasses, Set<Class<? extends Predicate>> predicateClasses) {
         this.camelContext = camelContext;
         this.routesBuilderClasses = routesBuilderClasses;
         this.processorClasses=processorClasses;
@@ -34,7 +35,9 @@ class CamelModule extends AbstractModule {
         this.endPointClasses=endPointClasses;
         this.producerClasses=producerClasses;
         this.consumerClasses=consumerClasses;
+        this.predicateClasses=predicateClasses;
     }
+
 
     @Override
     protected void configure() {
@@ -55,5 +58,6 @@ class CamelModule extends AbstractModule {
         endPointClasses.forEach(this::bind);
         producerClasses.forEach(this::bind);
         consumerClasses.forEach(this::bind);
+        predicateClasses.forEach(this::bind);
     }
 }

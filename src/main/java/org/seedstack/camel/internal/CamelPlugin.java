@@ -38,6 +38,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
     private static final String ENDPOINT_LOGS_DESCRIPTION="endpoint(s)";
     private static final String PRODUCER_LOGS_DESCRIPTION="producer(s)";
     private static final String CONSUMER_LOGS_DESCRIPTION="consumer(s)";
+    private static final String PREDICATE_LOGS_DESCRIPTION="predicate(s)";
 
     private final Set<Class<? extends RoutesBuilder>> routesBuilderClasses = new HashSet<>();
     private final Set<Class<? extends Processor>> processorClasses= new HashSet<>();
@@ -45,6 +46,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
     private final Set<Class<? extends Endpoint>> endpointClasses= new HashSet<>();
     private final Set<Class<? extends Producer>> producerClasses= new HashSet<>();
     private final Set<Class<? extends Consumer>> consumerClasses= new HashSet<>();
+    private final Set<Class<? extends Predicate>> predicateClasses= new HashSet<>();
 
     private CamelContext camelContext;
     @Inject
@@ -66,6 +68,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
                 .specification(CamelSpecifications.PROCESSOR)
                 .specification(CamelSpecifications.COMPONENT)
                 .specification(CamelSpecifications.ENDPOINT)
+                .specification(CamelSpecifications.PREDICATE)
                 .build();
     }
 
@@ -78,7 +81,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
         initializeClassesSet(initContext, Endpoint.class, CamelSpecifications.ENDPOINT, endpointClasses, ENDPOINT_LOGS_DESCRIPTION);
         initializeClassesSet(initContext, Producer.class, CamelSpecifications.PRODUCER, producerClasses, PRODUCER_LOGS_DESCRIPTION);
         initializeClassesSet(initContext, Consumer.class, CamelSpecifications.CONSUMER, consumerClasses, CONSUMER_LOGS_DESCRIPTION);
-
+        initializeClassesSet(initContext, Predicate.class, CamelSpecifications.PREDICATE, predicateClasses, PREDICATE_LOGS_DESCRIPTION);
         return InitState.INITIALIZED;
     }
 
@@ -99,7 +102,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
 
     @Override
     public Object nativeUnitModule() {
-        return new CamelModule(camelContext, routesBuilderClasses, processorClasses,componentClasses, endpointClasses, producerClasses,consumerClasses);
+        return new CamelModule(camelContext, routesBuilderClasses, processorClasses,componentClasses, endpointClasses, producerClasses,consumerClasses,predicateClasses);
     }
 
     @Override
@@ -108,6 +111,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
         routesBuilder.forEach(routesBuilder -> {
             try {
                 routesBuilder.addRoutesToCamelContext(camelContext);
+
             } catch (Exception e) {
                 throw SeedException.wrap(e, CamelErrorCode.ERROR_BUILDING_CAMEL_CONTEXT);
             }

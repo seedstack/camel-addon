@@ -61,4 +61,10 @@ public final class CamelSpecifications {
      */
     public static final Specification<Class<?>> CONSUMER = new SpecificationBuilder<>(
             classImplements(Consumer.class).and((classModifierIs(Modifier.ABSTRACT).negate()))).build();
+
+    /**
+     * The predicate specification. It accepts all non abstract classes Implementing {@link org.apache.camel.Predicate}
+     */
+    public static final Specification<Class<?>> PREDICATE = new SpecificationBuilder<>(
+            classImplements(Predicate.class).and((classModifierIs(Modifier.ABSTRACT).negate()))).build();
 }

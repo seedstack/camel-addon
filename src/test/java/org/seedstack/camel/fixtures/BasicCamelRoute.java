@@ -15,6 +15,7 @@ import org.apache.camel.builder.RouteBuilder;
 public class BasicCamelRoute extends RouteBuilder {
     @Override
     public void configure() throws Exception {
+        from("").
         errorHandler(deadLetterChannel("mock:error"));
         from("direct:a").to("mock:NoEnd");
     }
