@@ -17,6 +17,7 @@ import java.lang.reflect.Modifier;
 import org.apache.camel.*;
 import org.kametic.specifications.Specification;
 import org.seedstack.camel.CamelComponent;
+import org.seedstack.camel.CamelContextInitializer;
 import org.seedstack.camel.CamelEndpoint;
 import org.seedstack.seed.core.internal.utils.SpecificationBuilder;
 
@@ -67,4 +68,10 @@ public final class CamelSpecifications {
      */
     public static final Specification<Class<?>> PREDICATE = new SpecificationBuilder<>(
             classImplements(Predicate.class).and((classModifierIs(Modifier.ABSTRACT).negate()))).build();
+
+    /**
+     * Initializers specifications. Accepts All non abstract classes implementing {@link CamelContextInitializer}
+     */
+    public static final Specification<Class<?>> INITIALIZERS= new SpecificationBuilder<>(
+            classImplements(CamelContextInitializer.class).and((classModifierIs(Modifier.ABSTRACT).negate()))).build();
 }

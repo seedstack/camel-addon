@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.camel.*;
+import org.seedstack.camel.CamelContextInitializer;
 
 class CamelModule extends AbstractModule {
     private final CamelContext camelContext;
@@ -25,9 +26,10 @@ class CamelModule extends AbstractModule {
     private final Set<Class<? extends Producer>> producerClasses;
     private final Set<Class<? extends Consumer>> consumerClasses;
     private final Set<Class<? extends Predicate>> predicateClasses;
+    private final Set<Class<? extends CamelContextInitializer>> initializerClasses;
 
 
-    CamelModule(CamelContext camelContext, Set<Class<? extends RoutesBuilder>> routesBuilderClasses, Set<Class<? extends Processor>> processorClasses, Set<Class<? extends Component>> componentClasses,Set<Class<? extends Endpoint>> endPointClasses, Set<Class<? extends Producer>> producerClasses, Set<Class<? extends Consumer>> consumerClasses, Set<Class<? extends Predicate>> predicateClasses) {
+    CamelModule(CamelContext camelContext, Set<Class<? extends RoutesBuilder>> routesBuilderClasses, Set<Class<? extends Processor>> processorClasses, Set<Class<? extends Component>> componentClasses,Set<Class<? extends Endpoint>> endPointClasses, Set<Class<? extends Producer>> producerClasses, Set<Class<? extends Consumer>> consumerClasses, Set<Class<? extends Predicate>> predicateClasses,Set<Class<? extends CamelContextInitializer>> initializerClasses) {
         this.camelContext = camelContext;
         this.routesBuilderClasses = routesBuilderClasses;
         this.processorClasses=processorClasses;
@@ -36,6 +38,7 @@ class CamelModule extends AbstractModule {
         this.producerClasses=producerClasses;
         this.consumerClasses=consumerClasses;
         this.predicateClasses=predicateClasses;
+        this.initializerClasses=initializerClasses;
     }
 
 
@@ -51,6 +54,9 @@ class CamelModule extends AbstractModule {
         //Set binding for Endpoints
         Multibinder<Endpoint> endpointSetBinder=Multibinder.newSetBinder(binder(), Endpoint.class);
         endPointClasses.forEach(endpointClass-> endpointSetBinder.addBinding().to(endpointClass));
+        //Set bindings for initializers
+        Multibinder<CamelContextInitializer> initializerSetBinder=Multibinder.newSetBinder(binder(), CamelContextInitializer.class);
+        initializerClasses.forEach(initializerClass-> initializerSetBinder.addBinding().to(initializerClass));
 
         //Unitary bindings
         processorClasses.forEach(this::bind);
@@ -59,5 +65,6 @@ class CamelModule extends AbstractModule {
         producerClasses.forEach(this::bind);
         consumerClasses.forEach(this::bind);
         predicateClasses.forEach(this::bind);
+        initializerClasses.forEach(this::bind);
     }
 }

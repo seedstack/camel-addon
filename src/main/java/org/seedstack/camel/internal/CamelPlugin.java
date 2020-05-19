@@ -24,6 +24,7 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
 import org.kametic.specifications.Specification;
 import org.seedstack.camel.CamelComponent;
+import org.seedstack.camel.CamelContextInitializer;
 import org.seedstack.camel.CamelEndpoint;
 import org.seedstack.seed.SeedException;
 import org.seedstack.seed.core.internal.AbstractSeedPlugin;
@@ -39,6 +40,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
     private static final String PRODUCER_LOGS_DESCRIPTION="producer(s)";
     private static final String CONSUMER_LOGS_DESCRIPTION="consumer(s)";
     private static final String PREDICATE_LOGS_DESCRIPTION="predicate(s)";
+    private static final String INITIALIZERS_LOGS_DESCRIPTION="initializer(s)";
 
     private final Set<Class<? extends RoutesBuilder>> routesBuilderClasses = new HashSet<>();
     private final Set<Class<? extends Processor>> processorClasses= new HashSet<>();
@@ -47,6 +49,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
     private final Set<Class<? extends Producer>> producerClasses= new HashSet<>();
     private final Set<Class<? extends Consumer>> consumerClasses= new HashSet<>();
     private final Set<Class<? extends Predicate>> predicateClasses= new HashSet<>();
+    private final Set<Class<? extends CamelContextInitializer>> initializerClasses = new HashSet<>();
 
     private CamelContext camelContext;
     @Inject
@@ -55,6 +58,8 @@ public class CamelPlugin extends AbstractSeedPlugin {
     private Set<Component> customCamelComponents;
     @Inject
     private Set<Endpoint> customCamelEndpoints;
+    @Inject
+    private Set<CamelContextInitializer> camelContextInitializers;
 
     @Override
     public String name() {
@@ -69,6 +74,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
                 .specification(CamelSpecifications.COMPONENT)
                 .specification(CamelSpecifications.ENDPOINT)
                 .specification(CamelSpecifications.PREDICATE)
+                .specification(CamelSpecifications.INITIALIZERS)
                 .build();
     }
 
@@ -82,6 +88,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
         initializeClassesSet(initContext, Producer.class, CamelSpecifications.PRODUCER, producerClasses, PRODUCER_LOGS_DESCRIPTION);
         initializeClassesSet(initContext, Consumer.class, CamelSpecifications.CONSUMER, consumerClasses, CONSUMER_LOGS_DESCRIPTION);
         initializeClassesSet(initContext, Predicate.class, CamelSpecifications.PREDICATE, predicateClasses, PREDICATE_LOGS_DESCRIPTION);
+        initializeClassesSet(initContext, CamelContextInitializer.class, CamelSpecifications.INITIALIZERS, initializerClasses, INITIALIZERS_LOGS_DESCRIPTION);
         return InitState.INITIALIZED;
     }
 
@@ -102,7 +109,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
 
     @Override
     public Object nativeUnitModule() {
-        return new CamelModule(camelContext, routesBuilderClasses, processorClasses,componentClasses, endpointClasses, producerClasses,consumerClasses,predicateClasses);
+        return new CamelModule(camelContext, routesBuilderClasses, processorClasses,componentClasses, endpointClasses, producerClasses,consumerClasses,predicateClasses, initializerClasses);
     }
 
     @Override
@@ -137,7 +144,10 @@ public class CamelPlugin extends AbstractSeedPlugin {
                 throw SeedException.wrap(e, CamelErrorCode.ERROR_BUILDING_CAMEL_CONTEXT);
             }
         });
-
+        LOGGER.info("Starting application camel context initializers");
+        camelContextInitializers.forEach(initilizer ->{
+            initilizer.initialize(camelContext);
+        });
         LOGGER.info("Starting Camel context");
         camelContext.start();
     }
