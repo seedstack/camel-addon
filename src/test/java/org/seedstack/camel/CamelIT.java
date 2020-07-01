@@ -9,27 +9,20 @@
 package org.seedstack.camel;
 
 import javax.inject.Inject;
-
-import org.apache.camel.CamelContext;
-import org.apache.camel.Component;
 import org.apache.camel.ProducerTemplate;
-import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.impl.DefaultCamelContext;
 import org.assertj.core.api.Assertions;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.seedstack.camel.fixtures.BasicCamelComponent;
-import org.seedstack.camel.fixtures.BasicCamelRoute;
+import org.seedstack.camel.fixtures.TestJmsListener;
+import org.seedstack.seed.Ignore;
 import org.seedstack.seed.Logging;
 import org.seedstack.seed.testing.ConfigurationProperty;
 import org.seedstack.seed.testing.junit4.SeedITRunner;
-import org.seedstack.shed.reflect.ClassPredicates;
 import org.slf4j.Logger;
 
 @RunWith(SeedITRunner.class)
-@ConfigurationProperty(name="config.test.value",value="Test value")
+@ConfigurationProperty(name = "config.test.value", value = "Test value")
 public class CamelIT {
 
     @Inject
@@ -40,6 +33,9 @@ public class CamelIT {
 
     @Logging
     private Logger logger;
+
+    @Inject
+    private TestJmsListener jmsListener;
 
     /**
      * The route builder(s) should have been detected during initialization and attached to the Camel context.<br>
@@ -55,12 +51,19 @@ public class CamelIT {
      * Tests that the injector is Injected in the route builder<br>
      */
     @Test
-    public void usingProcessor(){
+    public void usingProcessor() {
         producerTemplate.sendBody("direct:b", "Test processor");
     }
 
     @Test
-    public void testComponentInjection(){
+    public void testComponentInjection() {
         Assertions.assertThat(basicCamelComponent).isNotNull();
+    }
+
+    @Test
+    @Ignore
+    public void transactedCamelRoute() throws InterruptedException {
+        producerTemplate.sendBody("direct:transacted", "World");
+        Assertions.assertThat(jmsListener.waitReceived()).isEqualTo("World");
     }
 }

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.camel.*;
+import org.apache.camel.spi.TransactedPolicy;
 import org.seedstack.camel.CamelContextInitializer;
 
 class CamelModule extends AbstractModule {
@@ -27,9 +28,15 @@ class CamelModule extends AbstractModule {
     private final Set<Class<? extends Consumer>> consumerClasses;
     private final Set<Class<? extends Predicate>> predicateClasses;
     private final Set<Class<? extends CamelContextInitializer>> initializerClasses;
+    private final GuiceBeanRepository guiceBeanRepository;
+    private final GuiceInjector guiceInjector;
 
-
-    CamelModule(CamelContext camelContext, Set<Class<? extends RoutesBuilder>> routesBuilderClasses, Set<Class<? extends Processor>> processorClasses, Set<Class<? extends Component>> componentClasses,Set<Class<? extends Endpoint>> endPointClasses, Set<Class<? extends Producer>> producerClasses, Set<Class<? extends Consumer>> consumerClasses, Set<Class<? extends Predicate>> predicateClasses,Set<Class<? extends CamelContextInitializer>> initializerClasses) {
+    CamelModule(CamelContext camelContext, Set<Class<? extends RoutesBuilder>> routesBuilderClasses,
+            Set<Class<? extends Processor>> processorClasses, Set<Class<? extends Component>> componentClasses,
+            Set<Class<? extends Endpoint>> endPointClasses, Set<Class<? extends Producer>> producerClasses,
+            Set<Class<? extends Consumer>> consumerClasses, Set<Class<? extends Predicate>> predicateClasses,
+            Set<Class<? extends CamelContextInitializer>> initializerClasses,
+            GuiceBeanRepository guiceBeanRepository, GuiceInjector guiceInjector) {
         this.camelContext = camelContext;
         this.routesBuilderClasses = routesBuilderClasses;
         this.processorClasses=processorClasses;
@@ -39,12 +46,16 @@ class CamelModule extends AbstractModule {
         this.consumerClasses=consumerClasses;
         this.predicateClasses=predicateClasses;
         this.initializerClasses=initializerClasses;
+        this.guiceBeanRepository = guiceBeanRepository;
+        this.guiceInjector = guiceInjector;
     }
 
 
     @Override
     protected void configure() {
+        bind(TransactedPolicy.class).to(SeedTransactedPolicy.class);
         bind(ProducerTemplate.class).toProvider(new ProducerTemplateProvider(camelContext));
+
         //Set binding for routes
         Multibinder<RoutesBuilder> routesBuilderBinder = Multibinder.newSetBinder(binder(), RoutesBuilder.class);
         routesBuilderClasses.forEach(cl -> routesBuilderBinder.addBinding().to(cl));
@@ -66,5 +77,9 @@ class CamelModule extends AbstractModule {
         consumerClasses.forEach(this::bind);
         predicateClasses.forEach(this::bind);
         initializerClasses.forEach(this::bind);
+
+        // Injection of Guice support classes
+        requestInjection(guiceBeanRepository);
+        requestInjection(guiceInjector);
     }
 }

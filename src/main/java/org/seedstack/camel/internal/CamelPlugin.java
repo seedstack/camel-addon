@@ -12,17 +12,21 @@ import io.nuun.kernel.api.plugin.InitState;
 import io.nuun.kernel.api.plugin.context.Context;
 import io.nuun.kernel.api.plugin.context.InitContext;
 import io.nuun.kernel.api.plugin.request.ClasspathScanRequest;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import javax.inject.Inject;
-
-import org.apache.camel.*;
+import org.apache.camel.CamelContext;
+import org.apache.camel.Component;
+import org.apache.camel.Consumer;
+import org.apache.camel.Endpoint;
+import org.apache.camel.Predicate;
+import org.apache.camel.Processor;
+import org.apache.camel.Producer;
+import org.apache.camel.RoutesBuilder;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.impl.DefaultCamelContext;
-import org.kametic.specifications.Specification;
 import org.seedstack.camel.CamelComponent;
 import org.seedstack.camel.CamelContextInitializer;
 import org.seedstack.camel.CamelEndpoint;
@@ -50,8 +54,10 @@ public class CamelPlugin extends AbstractSeedPlugin {
     private final Set<Class<? extends Consumer>> consumerClasses= new HashSet<>();
     private final Set<Class<? extends Predicate>> predicateClasses= new HashSet<>();
     private final Set<Class<? extends CamelContextInitializer>> initializerClasses = new HashSet<>();
-
+    private GuiceBeanRepository guiceBeanRepository;
+    private GuiceInjector guiceInjector;
     private CamelContext camelContext;
+
     @Inject
     private Set<RoutesBuilder> routesBuilder;
     @Inject
@@ -69,18 +75,22 @@ public class CamelPlugin extends AbstractSeedPlugin {
     @Override
     public Collection<ClasspathScanRequest> classpathScanRequests() {
         return classpathScanRequestBuilder()
-                .specification(CamelSpecifications.ROUTES_BUILDER)
-                .specification(CamelSpecifications.PROCESSOR)
-                .specification(CamelSpecifications.COMPONENT)
-                .specification(CamelSpecifications.ENDPOINT)
-                .specification(CamelSpecifications.PREDICATE)
-                .specification(CamelSpecifications.INITIALIZERS)
+                .predicate(CamelSpecifications.ROUTES_BUILDER)
+                .predicate(CamelSpecifications.PROCESSOR)
+                .predicate(CamelSpecifications.COMPONENT)
+                .predicate(CamelSpecifications.ENDPOINT)
+                .predicate(CamelSpecifications.PREDICATE)
+                .predicate(CamelSpecifications.INITIALIZERS)
                 .build();
     }
 
     @Override
     protected InitState initialize(InitContext initContext) {
-        camelContext = new DefaultCamelContext();
+        guiceBeanRepository = new GuiceBeanRepository();
+        camelContext = new DefaultCamelContext(guiceBeanRepository);
+        guiceInjector = new GuiceInjector(camelContext.getInjector());
+        camelContext.setInjector(guiceInjector);
+
         initializeClassesSet(initContext, RouteBuilder.class, CamelSpecifications.ROUTES_BUILDER, routesBuilderClasses, ROUTE_BUILDER_LOGS_DESCRIPTION);
         initializeClassesSet(initContext, Processor.class, CamelSpecifications.PROCESSOR, processorClasses, PROCESSOR_LOGS_DESCRIPTION);
         initializeClassesSet(initContext, Component.class, CamelSpecifications.COMPONENT, componentClasses, COMPONENT_LOGS_DESCRIPTION);
@@ -89,11 +99,12 @@ public class CamelPlugin extends AbstractSeedPlugin {
         initializeClassesSet(initContext, Consumer.class, CamelSpecifications.CONSUMER, consumerClasses, CONSUMER_LOGS_DESCRIPTION);
         initializeClassesSet(initContext, Predicate.class, CamelSpecifications.PREDICATE, predicateClasses, PREDICATE_LOGS_DESCRIPTION);
         initializeClassesSet(initContext, CamelContextInitializer.class, CamelSpecifications.INITIALIZERS, initializerClasses, INITIALIZERS_LOGS_DESCRIPTION);
+
         return InitState.INITIALIZED;
     }
 
-    private <T>void initializeClassesSet(InitContext initContext, Class<? extends T> managedClass, Specification specification, Set<Class<? extends T>> classSet, String classesLogDescription){
-        initContext.scannedTypesBySpecification()
+    private <T>void initializeClassesSet(InitContext initContext, Class<? extends T> managedClass, java.util.function.Predicate<Class<?>> specification, Set<Class<? extends T>> classSet, String classesLogDescription){
+        initContext.scannedTypesByPredicate()
                 .getOrDefault(specification, new ArrayList<>())
                 .forEach(candidate ->{
                     Class<? extends T> candidateClass = candidate.asSubclass(managedClass);
@@ -109,7 +120,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
 
     @Override
     public Object nativeUnitModule() {
-        return new CamelModule(camelContext, routesBuilderClasses, processorClasses,componentClasses, endpointClasses, producerClasses,consumerClasses,predicateClasses, initializerClasses);
+        return new CamelModule(camelContext, routesBuilderClasses, processorClasses,componentClasses, endpointClasses, producerClasses,consumerClasses,predicateClasses, initializerClasses, guiceBeanRepository, guiceInjector);
     }
 
     @Override
@@ -145,9 +156,7 @@ public class CamelPlugin extends AbstractSeedPlugin {
             }
         });
         LOGGER.info("Starting application camel context initializers");
-        camelContextInitializers.forEach(initilizer ->{
-            initilizer.initialize(camelContext);
-        });
+        camelContextInitializers.forEach(initializer -> initializer.initialize(camelContext));
         LOGGER.info("Starting Camel context");
         camelContext.start();
     }
