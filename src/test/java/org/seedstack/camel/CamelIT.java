@@ -8,18 +8,19 @@
 
 package org.seedstack.camel;
 
-import javax.inject.Inject;
 import org.apache.camel.ProducerTemplate;
 import org.assertj.core.api.Assertions;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.seedstack.camel.fixtures.BasicCamelComponent;
 import org.seedstack.camel.fixtures.TestJmsListener;
-import org.seedstack.seed.Ignore;
 import org.seedstack.seed.Logging;
 import org.seedstack.seed.testing.ConfigurationProperty;
 import org.seedstack.seed.testing.junit4.SeedITRunner;
 import org.slf4j.Logger;
+
+import javax.inject.Inject;
 
 @RunWith(SeedITRunner.class)
 @ConfigurationProperty(name = "config.test.value", value = "Test value")
