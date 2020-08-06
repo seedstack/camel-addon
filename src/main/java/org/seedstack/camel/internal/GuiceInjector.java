@@ -8,11 +8,13 @@
 package org.seedstack.camel.internal;
 
 import com.google.inject.ConfigurationException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import javax.inject.Inject;
 import org.apache.camel.RuntimeCamelException;
 import org.apache.camel.spi.Injector;
+
+import javax.inject.Inject;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 public class GuiceInjector implements Injector {
     @Inject
@@ -38,9 +40,8 @@ public class GuiceInjector implements Injector {
                 Object obj = fm.invoke(null);
                 answer = type.cast(obj);
             }
-        } catch (Exception e) {
-            throw new RuntimeCamelException("Error invoking factory method: " + factoryMethod + " on class: " + type,
-                    e);
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeCamelException("Error invoking factory method: " + factoryMethod + " on class: " + type, e);
         }
         return answer;
     }
